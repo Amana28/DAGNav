@@ -19,7 +19,7 @@
   .graph-container {
     background-color: white;
     border-radius: 8px;
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.1), inset 0 -4px 6px rgba(0, 0, 0, 0.1);
     padding: 20px;
     height: calc(100vh - 150px); /* Adjust based on your navbar height */
     overflow: auto;
