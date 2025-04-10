@@ -1,10 +1,17 @@
 <script>
+  import { afterNavigate } from '$app/navigation';
+  import { writable } from 'svelte/store';
+  
+  const currentPath = writable('/');
+  
+  afterNavigate(({ to }) => {
+    currentPath.set(to?.url.pathname || '/');
+  });
+  
   // Navigation items
   const navItems = [
-    { text: 'Graph View', href: '#', active: true },
-    { text: 'Matrices', href: '#' },
-    { text: 'Errors', href: '#' },
-
+    { text: 'Graph Visualization', href: '/' },
+    { text: 'Error Plots', href: '/error-plots' },
   ];
 </script>
 
@@ -15,7 +22,7 @@
         <li>
           <a 
             href={item.href} 
-            class:active={item.active}
+            class:active={$currentPath === item.href}
           >
             {item.text}
           </a>
@@ -52,7 +59,7 @@
 
   a {
     text-decoration: none;
-    color: #6a737c;
+    color: #7c6a78;
     font-size: 16px;
     padding: 6px 12px;
     border-radius: 20px;
