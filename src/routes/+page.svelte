@@ -1,3 +1,4 @@
+<!-- +page.svelte -->
 <script>
     import './style.css';
     import * as d3 from 'd3';
@@ -5,11 +6,16 @@
     import GraphView from '$lib/components/GraphView.svelte';
     import MatrixView from '$lib/components/MatrixView.svelte';
     import GeneratedPaths from '$lib/components/GeneratedPaths.svelte';
+
+    let { data } = $props();
+    
+    let graphmlData = data.graphmlData;
+
 </script>
 
 
 <div class="graph-visualization">
-    <GraphView />
+    <GraphView {graphmlData} />
     <!-- <MatrixView /> -->
 </div>
 <div class="generated-paths">

@@ -41,9 +41,9 @@
 
     .generated-paths-header h2 {
         margin: 0;
-
+        padding-left: 1em;
         font-size: 1.5rem;
-        text-align: center;
+        text-align: left;
         color: #2c3e50;
     }
 
