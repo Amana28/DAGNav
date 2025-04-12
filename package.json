@@ -52,6 +52,8 @@
 		"svelte"
 	],
 	"dependencies": {
+		"cytoscape": "^3.31.2",
+		"cytoscape-graphml": "^1.0.6",
 		"d3": "^7.9.0",
 		"fast-kde": "^0.2.2"
 	}

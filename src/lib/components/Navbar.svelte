@@ -11,7 +11,7 @@
   // Navigation items
   const navItems = [
     { text: 'Graph Visualization', href: '/' },
-    { text: 'Error Plots', href: '/error-plots' },
+    { text: 'Statistics', href: '/statistics-page' },
   ];
 </script>
 
