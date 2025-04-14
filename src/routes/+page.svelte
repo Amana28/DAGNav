@@ -16,19 +16,27 @@
     // console.log('Train paths type:', Array.isArray(trainPaths) ? 'Array' : typeof trainPaths);
     // console.log('Train paths length:', trainPaths?.length);
 
-    // Only display the first 100 paths to prevent performance issues
+    // Only display the first 1000 paths for now
     const displayPaths = trainPaths?.slice(0, 1000) || [];
+
+ 
+    let hoveredPath = $state(null);
+    
+
+    function handlePathHover(path) {
+        hoveredPath = path;
+    }
     
 
 </script>
 
 
 <div class="graph-view">
-    <GraphView {graphmlData} />
+    <GraphView {graphmlData} highlightedPath={hoveredPath} />
     <!-- <MatrixView /> -->
 </div>
 <div class="path-list">
-    <PathList paths={displayPaths} />
+    <PathList paths={displayPaths} onhover={handlePathHover} />
 </div>
 
 

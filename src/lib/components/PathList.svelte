@@ -1,5 +1,5 @@
 <script>
-    let { paths = [] } = $props();
+    let { paths = [], onhover = () => {} } = $props();
 </script>
 
 
@@ -10,7 +10,14 @@
     <div class="generated-paths-content">
         <ul>
             {#each paths as path}
-                <li>{path.join(' ')}</li>
+                <li
+                    onmouseover={() => onhover(path)}
+                    onmouseleave={() => onhover(null)}
+                    onfocus={() => onhover(path)}
+                    onfocusout={() => onhover(null)}
+                >
+                    {path.join(' ')}
+                </li>
             {/each}
         </ul>
     </div>
@@ -59,12 +66,12 @@
     }
 
     /* add space between list items */
-	li + li {
-		margin-top: 0.5em;
-	}
+    li + li {
+        margin-top: 0.5em;
+    }
 
-	/* set background color when hovering over list item */
-	li:hover {
-		background-color: #dddddd;
-	}
-</style> 
+    /* set background color when hovering over list item */
+    li:hover {
+        background-color: #dddddd;
+    }
+</style>

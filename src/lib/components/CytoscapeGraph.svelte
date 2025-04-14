@@ -2,6 +2,10 @@
 <script>
 	import cytoscape from 'cytoscape';
     // import * as d3 from 'd3';
+
+    let { graphmlData, layout, style, highlightedPath = null } = $props();
+	let container;
+    let cy;
     
     // Function to calculate positions with level-based constraint (custom DAG layout)
     async function calculateDAGPositions(nodes, edges) {
@@ -221,6 +225,72 @@
         return positionMap;
     }
 
+    function highlightPath(cy, path) {
+     
+        if (!cy || !cy.elements() || cy.$('node').length === 0) {
+            console.log('Cytoscape not ready for highlighting');
+            return;
+        }
+        // Debug information
+        console.log('Attempting to highlight path:', path);
+        
+        if (!path || !cy) {
+            console.log('Path or cy is null/undefined');
+            return;
+        }
+        
+        // Check if path has enough nodes to be valid
+        if (path.length < 2) {
+            console.log('Path is too short:', path);
+            return;
+        }
+        
+        // Check if each node in the path exists in the graph
+        const missingNodes = [];
+        for (let i = 0; i < path.length; i++) {
+            const nodeId = path[i].toString();
+            const node = cy.$id(nodeId);
+            if (node.length === 0) {
+                missingNodes.push(nodeId);
+            }
+        }
+        
+        if (missingNodes.length > 0) {
+            console.log('Some nodes in the path do not exist in the graph:', missingNodes);
+        }
+        
+        // Clear any existing highlights
+        cy.elements().removeClass('path-highlight path-node');
+        
+        // Highlight each node in the path
+        for (let i = 0; i < path.length; i++) {
+            const nodeId = path[i].toString();
+            const node = cy.$id(nodeId);
+            if (node.length > 0) {
+                node.addClass('path-node');
+                console.log('Highlighted node:', nodeId);
+            }
+        }
+        
+        // Highlight edges between consecutive nodes in the path
+        let foundEdges = 0;
+        for (let i = 0; i < path.length - 1; i++) {
+            const sourceId = path[i].toString();
+            const targetId = path[i + 1].toString();
+            
+            // Find edge between source and target
+            const edge = cy.edges(`[source = "${sourceId}"][target = "${targetId}"]`);
+            if (edge.length > 0) {
+                edge.addClass('path-highlight');
+                foundEdges++;
+            } else {
+                console.log(`No edge found between ${sourceId} and ${targetId}`);
+            }
+        }
+        
+        console.log(`Highlighted ${foundEdges} edges out of ${path.length - 1} possible edges`);
+    }
+
     // Function to find all descendants of a node
     function findAllDescendants(cy, nodeId) {
         const descendants = new Set();
@@ -365,10 +435,6 @@
             };
         });
     }
-
-	let { graphmlData, layout, style } = $props();
-	let container;
-    let cy;
     
 	$effect(() => {
         if (graphmlData && container) {
@@ -407,6 +473,27 @@
                             'target-arrow-color': '#dddddd',
                             'opacity': 0.6,
                             'arrow-scale': 1.5 // Increased arrow size
+                        }
+                    },
+                    // New style for highlighted path nodes
+                    {
+                        selector: 'node.path-node',
+                        style: {
+                            'background-color': '#ff9900', // Orange for highlighted path
+                            'border-width': 3,
+                            'border-color': '#ffcc00', // Light orange border
+                            'z-index': 20
+                        }
+                    },
+                    // New style for highlighted path edges
+                    {
+                        selector: 'edge.path-highlight',
+                        style: {
+                            'line-color': '#ff9900', // Orange for highlighted path
+                            'target-arrow-color': '#ff9900',
+                            'width': 5,
+                            'opacity': 1,
+                            'z-index': 20
                         }
                     },
                     // Highlighted edges (when hovering over source node)
@@ -484,35 +571,8 @@
             // Parse GraphML
             cy.graphml().parse(graphmlData);
             
-            // Apply the selected layout
-            if (layout) {
-                if (layout.name === 'customDAGView') {
-                    // Apply custom DAG layout
-                    const nodes = cy.nodes();
-                    const edges = cy.edges();
+            // Add interactivity 
                     
-                    calculateDAGPositions(nodes, edges).then(positionMap => {
-                        // Apply positions to nodes
-                        nodes.forEach(node => {
-                            const id = node.id();
-                            if (positionMap[id]) {
-                                node.position(positionMap[id]);
-                            }
-                        });
-                        
-                        // Fit and center
-                        cy.fit();
-                        cy.center();
-                    });
-                } else {
-                    cy.layout(layout).run();
-                    cy.center();
-                    cy.fit();
-                }
-            }
-            
-            // Add interactivity
-            
             // Hover over node to highlight outgoing edges
             cy.on('mouseover', 'node', function(e) {
                 const node = e.target;
@@ -593,6 +653,53 @@
             });
         }
     });
+
+
+    // Apply layout when cy and layout are available
+    $effect(() => {
+        if (!cy || !layout) return;
+        
+        if (layout.name === 'customDAGView') {
+            // Apply custom DAG layout
+            const nodes = cy.nodes();
+            const edges = cy.edges();
+            
+            calculateDAGPositions(nodes, edges).then(positionMap => {
+                // Apply positions to nodes
+                nodes.forEach(node => {
+                    const id = node.id();
+                    if (positionMap[id]) {
+                        node.position(positionMap[id]);
+                    }
+                });
+                
+                // Fit and center
+                cy.fit();
+                cy.center();
+            });
+        } else {
+            cy.layout(layout).run();
+            cy.center();
+            cy.fit();
+        }
+    });
+
+    // Handle path highlighting separately
+    $effect(() => {
+        if (!cy) return;
+        
+        // Batch operations to prevent layout recalculation
+        cy.batch(() => {
+            // First remove existing path highlights
+            cy.elements().removeClass('path-highlight path-node');
+            
+            // Add new path highlights if a path is selected
+            if (highlightedPath) {
+                highlightPath(cy, highlightedPath);
+            }
+        });
+    });
+
     
     // Export functions that can be called from parent
     function runLayout(layoutOptions) {

@@ -1,9 +1,8 @@
 <!-- GraphView.svelte -->
 <script>
 	import CytoscapeGraph from '$lib/components/CytoscapeGraph.svelte';
-	import { writable } from 'svelte/store';
 	
-	let { graphmlData } = $props();
+	let { graphmlData, highlightedPath = null } = $props();
     
 	// Layout options
 	const layouts = {
@@ -100,7 +99,7 @@
             </button>
         </div>
     </div>
-	<CytoscapeGraph {graphmlData} layout={currentLayout} {style} />
+	<CytoscapeGraph {graphmlData} layout={currentLayout} {style} {highlightedPath} />
 </div>
 
 <style>
@@ -153,3 +152,4 @@
         border-color: #0062cc;
     }
 </style>
+
