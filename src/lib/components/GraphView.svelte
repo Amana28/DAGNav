@@ -1,3 +1,4 @@
+<!-- GraphView.svelte -->
 <script>
 	import CytoscapeGraph from '$lib/components/CytoscapeGraph.svelte';
 	import { writable } from 'svelte/store';
@@ -110,7 +111,7 @@
 	}
     
     .graph-view-header {
-        margin-bottom: 1em;
+        margin-bottom: 0.5em;
         padding-bottom: 0.5em;
         display: flex;
         justify-content: space-between;
@@ -134,7 +135,8 @@
         background-color: #f8f9fa;
         border: 1px solid #dee2e6;
         border-radius: 4px;
-        padding: 0.5em 1em;
+        padding: 1em;
+		margin: 0.5em;
         font-size: 0.875rem;
         color: #2c3e50;
         cursor: pointer;

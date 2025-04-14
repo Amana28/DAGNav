@@ -1,4 +1,5 @@
 <script>
+    let { paths = [] } = $props();
 </script>
 
 
@@ -8,16 +9,9 @@
     </div>
     <div class="generated-paths-content">
         <ul>
-            <li>Path 1</li>
-            <li>Path 2</li>
-            <li>Path 3</li>
-            <li>Path 4</li>
-            <li>Path 5</li>
-            <li>Path 6</li>
-            <li>Path 7</li>
-            <li>Path 8</li>
-            <li>Path 9</li>
-            <li>Path 10</li>
+            {#each paths as path}
+                <li>{path.join(' ')}</li>
+            {/each}
         </ul>
     </div>
 </div>
