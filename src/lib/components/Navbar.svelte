@@ -1,3 +1,4 @@
+<!-- NavBar.svelte -->
 <script>
   import { afterNavigate } from '$app/navigation';
   import { writable } from 'svelte/store';

@@ -2,7 +2,7 @@
 <script>
 	import CytoscapeGraph from '$lib/components/CytoscapeGraph.svelte';
 	import OptionSelector from '$lib/components/OptionSelector.svelte';
-
+	
 	let { graphmlData, highlightedPath = null } = $props();
     
 	// Layout options
@@ -75,14 +75,12 @@
 			}
 		}
 	];
-
     // Layout selection options for OptionSelector
     const layoutOptions = [
         { value: 'cose', label: 'Force Layout' },
         { value: 'customDAGView', label: 'Custom DAG' },
         { value: 'concentric', label: 'Concentric' }
     ];
-
 	// Path type options 
     const pathTypeOptions = [
         { value: 'train', label: 'Training Paths' },
@@ -95,12 +93,16 @@
 		currentLayout = layouts[layoutName];
 		console.log('Layout changed to:', layoutName, currentLayout);
 	}
+	
+	// Track container dimensions
+	let containerWidth = $state(0);
+	let containerHeight = $state(0);
 </script>
 
-<div class="graph-view-container">
+<div class="graph-view-container" bind:clientWidth={containerWidth} bind:clientHeight={containerHeight}>
     <div class="graph-view-header">
 		<h2>Graph View [{currentLayout.name}]</h2>
-		 <!-- Option select component for layout options -->
+		<!-- Option select component for layout options -->
 		<div class="graph-view-selector">
 			<OptionSelector 
 				options={layoutOptions} 
@@ -111,9 +113,9 @@
 		</div>
 	</div>
 	
-   
-    
-	<CytoscapeGraph {graphmlData} layout={currentLayout} {style} {highlightedPath} />
+	<div class="cytoscape-wrapper">
+		<CytoscapeGraph {graphmlData} layout={currentLayout} {style} {highlightedPath} />
+	</div>
 </div>
 
 <style>
@@ -123,14 +125,19 @@
         max-width: 100%;
         max-height: 100%;
         padding: 1em;
+        display: flex;
+        flex-direction: column;
+        box-sizing: border-box;
 	}
     
     .graph-view-header {
-        margin-bottom: 1em;
+        margin-bottom: 1em; /* Fixed margin */
         padding-bottom: 0.5em;
         display: flex;
         justify-content: space-between;
         align-items: center;
+        flex: 0 0 auto;
+        height: 3em; /* Fixed height for the header */
     }
     
 	.graph-view-header h2 {
@@ -143,5 +150,15 @@
     
     .graph-view-selector {
         margin-right: 1em;
+    }
+    
+    .cytoscape-wrapper {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        overflow: hidden;
+        position: relative;
     }
 </style>

@@ -21,7 +21,6 @@
     
     // Make sure this function is correctly passing the type up to the parent
     function handlePathTypeChange(type) {
-        // console.log('PathList: path type changing to', type);
         onPathTypeChange(type);
     }
 
@@ -120,7 +119,6 @@
     function handleSortChange(newSorts) {
         selectedSorts = newSorts;
     }
-
 </script>
 
 <div class="path-list-container">
@@ -146,27 +144,28 @@
                 />
             </div>
         </div>
-
     </div>
     
-    <div class="path-list-content">
-        <ul>
-            {#each sortedPaths as pathObj}
-                <button 
-                    class="path-list-item"
-                    class:incorrect={pathObj.correct === false}
-                    onmouseover={() => onhover(pathObj.path)}
-                    onfocus={() => onhover(pathObj.path)}
-                    onmouseout={() => onhover(null)}
-                    onblur={() => onhover(null)}
-                >
-                    <span class="path-list-text">{pathObj.path.join(' ')}</span>
-                    {#if currentPathType === 'predicted' && pathObj.correct === false}
-                        <span class="error-tag">{pathObj.errorType || 'error'}</span>
-                    {/if}
-                </button>
-            {/each}
-        </ul>
+    <div class="path-list-wrapper">
+        <div class="path-list-content">
+            <ul>
+                {#each sortedPaths as pathObj}
+                    <button 
+                        class="path-list-item"
+                        class:incorrect={pathObj.correct === false}
+                        onmouseover={() => onhover(pathObj.path)}
+                        onfocus={() => onhover(pathObj.path)}
+                        onmouseout={() => onhover(null)}
+                        onblur={() => onhover(null)}
+                    >
+                        <span class="path-list-text">{pathObj.path.join(' ')}</span>
+                        {#if currentPathType === 'predicted' && pathObj.correct === false}
+                            <span class="error-tag">{pathObj.errorType || 'error'}</span>
+                        {/if}
+                    </button>
+                {/each}
+            </ul>
+        </div>
     </div>
 </div>
 
@@ -177,14 +176,19 @@
         max-width: 100%;
         max-height: 100%;
         padding: 1em;
+        display: flex;
+        flex-direction: column;
+        box-sizing: border-box;
     }
     
     .path-list-header {
-        margin-bottom: 1em;
+        margin-bottom: 1em; /* Fixed margin */
         padding-bottom: 0.5em;
         display: flex;
         justify-content: space-between;
         align-items: center;
+        flex: 0 0 auto;
+        height: 3em; /* Fixed height for the header */
     }
     
     .path-list-header h2 {
@@ -200,8 +204,16 @@
         gap: 1em;
     }
     
+    .path-list-wrapper {
+        flex: 1;
+        display: flex;
+        width: 100%;
+        overflow: hidden;
+        position: relative;
+    }
+    
     .path-list-content {
-        height: 100%;
+        flex: 1;
         width: 100%;
         background-color: white;
         border-radius: 8px;
