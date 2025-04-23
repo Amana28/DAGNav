@@ -205,6 +205,8 @@
         const levelHeight = 200; // vertical spacing between levels
         const positionMap = {};
         
+        const layoutPadding = layout && layout.padding ? layout.padding : 30;
+
         Object.entries(nodesByLevel).forEach(([level, nodeIds]) => {
             const y = parseInt(level) * levelHeight;
             const nodeCount = nodeIds.length;
@@ -655,9 +657,13 @@
     });
 
 
+
     // Apply layout when cy and layout are available
     $effect(() => {
         if (!cy || !layout) return;
+        
+        // Stop any running animations first
+        cy.stop();
         
         if (layout.name === 'customDAGView') {
             // Apply custom DAG layout
@@ -665,22 +671,33 @@
             const edges = cy.edges();
             
             calculateDAGPositions(nodes, edges).then(positionMap => {
-                // Apply positions to nodes
-                nodes.forEach(node => {
-                    const id = node.id();
-                    if (positionMap[id]) {
-                        node.position(positionMap[id]);
-                    }
-                });
+                // Apply positions with animation
+                cy.elements().makeLayout({
+                    name: 'preset',
+                    positions: node => positionMap[node.id()],
+                    animate: 'end',
+                    animationDuration: 500,
+                    padding: layout.padding || 100
+                }).run();
                 
-                // Fit and center
-                cy.fit();
-                cy.center();
+                setTimeout(() => { 
+                    cy.fit(undefined, layout.padding || 100);
+                    cy.center(); 
+                }, 50);
             });
         } else {
-            cy.layout(layout).run();
-            cy.center();
-            cy.fit();
+            // For all other layouts (cose, concentric, etc.)
+            const layoutOptions = {
+                ...layout,
+                animate: 'end',
+                animationDuration: 500
+            };
+            
+            cy.layout(layoutOptions).run();
+            setTimeout(() => { 
+                cy.fit(undefined, layout.padding || 50);
+                cy.center(); 
+            }, 50);
         }
     });
 

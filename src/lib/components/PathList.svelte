@@ -1,77 +1,255 @@
+<!-- PathList.svelte -->
 <script>
-    let { paths = [], onhover = () => {} } = $props();
+    import OptionSelector from '$lib/components/OptionSelector.svelte';
+    import SortSelector from '$lib/components/SortSelector.svelte';
+    import * as d3 from 'd3';
+    
+    // Define props with default values
+    let { 
+        paths = [], 
+        onhover = () => {},
+        currentPathType = 'train',
+        onPathTypeChange = () => {} 
+    } = $props();
+    
+    // Path options for the selector
+    const pathTypeOptions = [
+        { value: 'train', label: 'Training Paths' },
+        { value: 'test', label: 'Test Paths' },
+        { value: 'predicted', label: 'Predicted Paths' }
+    ];
+    
+    // Make sure this function is correctly passing the type up to the parent
+    function handlePathTypeChange(type) {
+        // console.log('PathList: path type changing to', type);
+        onPathTypeChange(type);
+    }
+
+    // Sorting logic
+    let selectedSorts = $state([]);
+    
+    // Define sort options based on path type using derived
+    let sortOptions = $derived(
+        currentPathType === 'predicted' 
+        ? [
+            { value: 'length+', label: 'Length ↑' },
+            { value: 'length-', label: 'Length ↓' },
+            { value: 's+', label: 'Start ↑' },
+            { value: 's-', label: 'Start ↓' },
+            { value: 't+', label: 'End ↑' },
+            { value: 't-', label: 'End ↓' },
+            { value: 'correct', label: 'Correct' },
+            { value: 'incorrect', label: 'Incorrect' }
+        ] 
+        : [
+            { value: 'length+', label: 'Length ↑' },
+            { value: 'length-', label: 'Length ↓' },
+            { value: 's+', label: 'Start ↑' },
+            { value: 's-', label: 'Start ↓' },
+            { value: 't+', label: 'End ↑' },
+            { value: 't-', label: 'End ↓' }
+        ]
+    );
+    
+    // Apply D3 sorting to paths
+    let sortedPaths = $derived(sortPathsWithD3(paths, selectedSorts));
+    
+    function sortPathsWithD3(pathsToSort, sortCriteria) {
+        // Return original if no sort criteria
+        if (!sortCriteria || sortCriteria.length === 0) {
+            return pathsToSort;
+        }
+        
+        // Create a new array to avoid mutating the original
+        let sorted = [...pathsToSort];
+        
+        // D3 multi-level sorting
+        sorted = d3.sort(sorted, (a, b) => {
+            // Apply each sort criteria in sequence
+            for (const sort of sortCriteria) {
+                let accessor;
+                let order = 1; // Default ascending
+                
+                switch (sort) {
+                    case 'length+':
+                        accessor = d => d.length;
+                        break;
+                    case 'length-':
+                        accessor = d => d.length;
+                        order = -1;
+                        break;
+                    case 's+':
+                        accessor = d => d.start;
+                        break;
+                    case 's-':
+                        accessor = d => d.start;
+                        order = -1;
+                        break;
+                    case 't+':
+                        accessor = d => d.end;
+                        break;
+                    case 't-':
+                        accessor = d => d.end;
+                        order = -1;
+                        break;
+                    case 'correct':
+                        accessor = d => d.correct ? 1 : 0;
+                        order = -1; // Put correct at top
+                        break;
+                    case 'incorrect':
+                        accessor = d => d.correct ? 1 : 0;
+                        // Default ascending puts incorrect at top
+                        break;
+                }
+                
+                // Apply this level of sorting
+                const comparison = d3.ascending(accessor(a), accessor(b)) * order;
+                
+                // If this comparison yields a difference, return it
+                if (comparison !== 0) return comparison;
+            }
+            
+            // If all criteria are equal, maintain original order
+            return 0;
+        });
+        
+        return sorted;
+    }
+    
+    // Handle sort changes
+    function handleSortChange(newSorts) {
+        selectedSorts = newSorts;
+    }
+
 </script>
 
+<div class="path-list-container">
+    <div class="path-list-header">
+        <h2>Generated Paths</h2>
+        
+        <div class="control-buttons">
+            <div class="sort-selector">
+                <SortSelector
+                    sortOptions={sortOptions}
+                    selectedSorts={selectedSorts}
+                    onSortChange={handleSortChange}
+                    label="Sort"
+                />
+            </div>
+            
+            <div class="path-selector">
+                <OptionSelector 
+                    options={pathTypeOptions}
+                    activeOption={currentPathType}
+                    onSelect={handlePathTypeChange}
+                    label="View"
+                />
+            </div>
+        </div>
 
-<div class="generated-paths-container">
-    <div class="generated-paths-header">
-      <h2>Generated Paths</h2>
     </div>
-    <div class="generated-paths-content">
+    
+    <div class="path-list-content">
         <ul>
-            {#each paths as path}
-                <li
-                    onmouseover={() => onhover(path)}
-                    onmouseleave={() => onhover(null)}
-                    onfocus={() => onhover(path)}
-                    onfocusout={() => onhover(null)}
+            {#each sortedPaths as pathObj}
+                <button 
+                    class="path-list-item"
+                    class:incorrect={pathObj.correct === false}
+                    onmouseover={() => onhover(pathObj.path)}
+                    onfocus={() => onhover(pathObj.path)}
+                    onmouseout={() => onhover(null)}
+                    onblur={() => onhover(null)}
                 >
-                    {path.join(' ')}
-                </li>
+                    <span class="path-list-text">{pathObj.path.join(' ')}</span>
+                    {#if currentPathType === 'predicted' && pathObj.correct === false}
+                        <span class="error-tag">{pathObj.errorType || 'error'}</span>
+                    {/if}
+                </button>
             {/each}
         </ul>
     </div>
 </div>
 
-
-
 <style>
-    .generated-paths-container {
+    .path-list-container {
         height: 100%;
         width: 100%;
-        /* make div no wider or taller than its parent */
         max-width: 100%;
         max-height: 100%;
         padding: 1em;
     }
-
-    .generated-paths-header {
+    
+    .path-list-header {
         margin-bottom: 1em;
         padding-bottom: 0.5em;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
-
-    .generated-paths-header h2 {
+    
+    .path-list-header h2 {
         margin: 0;
         padding-left: 1em;
         font-size: 1.5rem;
         text-align: left;
         color: #2c3e50;
     }
-
-    .generated-paths-content {
+    
+    .control-buttons {
+        display: flex;
+        gap: 1em;
+    }
+    
+    .path-list-content {
         height: 100%;
         width: 100%;
         background-color: white;
         border-radius: 8px;
         box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.1), inset 0 -4px 6px rgba(0, 0, 0, 0.1);
-        
-        /* add scrolling */
         overflow: auto;
     }
-
+    
     ul {
         padding: 2em;
         margin: 0;
         list-style-type: none;
     }
-
-    /* add space between list items */
-    li + li {
+    
+    .path-list-item {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+        text-align: left;
+        background: none;
+        border: none;
+        padding: 0.5em;
         margin-top: 0.5em;
+        font-family: inherit;
+        font-size: inherit;
+        cursor: pointer;
+        border-radius: 4px;
     }
-
-    /* set background color when hovering over list item */
-    li:hover {
+    
+    .path-list-item:hover, .path-list-item:focus {
         background-color: #dddddd;
+        outline: none;
+    }
+    
+    .path-list-item.incorrect {
+        border-left: 3px solid #e74c3c;
+        padding-left: 0.75em;
+    }
+    
+    .path-list-text {
+        flex: 1;
+    }
+    
+    .error-tag {
+        font-size: 0.8em;
+        background-color: #e74c3c;
+        color: white;
+        padding: 0.1em 0.4em;
+        border-radius: 3px;
+        margin-left: 0.5em;
     }
 </style>
