@@ -1,7 +1,8 @@
 <!-- GraphView.svelte -->
 <script>
 	import CytoscapeGraph from '$lib/components/CytoscapeGraph.svelte';
-	
+	import OptionSelector from '$lib/components/OptionSelector.svelte';
+
 	let { graphmlData, highlightedPath = null } = $props();
     
 	// Layout options
@@ -9,10 +10,10 @@
 		cose: { 
 			name: 'cose',
 			idealEdgeLength: 100,
-			nodeOverlap: 250,
+			nodeOverlap: 200,
 			refresh: 20,
 			fit: true,
-			padding: 30,
+			padding: 200,
 			randomize: false,
 			componentSpacing: 100,
 			nodeRepulsion: 400000,
@@ -25,27 +26,24 @@
 			minTemp: 1.0
 		},
 		customDAGView: {
-			name: 'customDAGView', // Renamed from d3Tree
+			name: 'customDAGView',
 			fit: true,
-			padding: 30,
+			padding: 100,
 			animate: true
 		},
 		concentric: {
 			name: 'concentric',
 			concentric: function(node) {
-				// Calculate concentric value based on the node's incoming degree
-				// Nodes with fewer incoming connections will be in the center
 				return 10 - node.indegree();
 			},
 			levelWidth: function(nodes) {
-				// Nodes will be positioned in levels based on their concentric value
 				return 2;
 			},
-			minNodeSpacing: 100, // Minimum spacing between nodes
+			minNodeSpacing: 100,
 			animate: true,
-			padding: 30,
+			padding: 100,
 			fit: true,
-			spacingFactor: 1.2 // Multiplier for spacing between nodes
+			spacingFactor: 1.2
 		}
 	};
 	
@@ -77,47 +75,65 @@
 			}
 		}
 	];
+
+    // Layout selection options for OptionSelector
+    const layoutOptions = [
+        { value: 'cose', label: 'Force Layout' },
+        { value: 'customDAGView', label: 'Custom DAG' },
+        { value: 'concentric', label: 'Concentric' }
+    ];
+
+	// Path type options 
+    const pathTypeOptions = [
+        { value: 'train', label: 'Training Paths' },
+        { value: 'valid', label: 'Validation Paths' },
+        { value: 'predicted', label: 'Predicted Paths' }
+    ];
 	
 	// Handle layout change
 	function changeLayout(layoutName) {
 		currentLayout = layouts[layoutName];
+		console.log('Layout changed to:', layoutName, currentLayout);
 	}
 </script>
 
 <div class="graph-view-container">
     <div class="graph-view-header">
-        <h2>Graph View</h2>
-        <div class="layout-buttons">
-            <button class:active={currentLayout.name === 'cose'} onclick={() => changeLayout('cose')}>
-                Force Layout
-            </button>
-            <button class:active={currentLayout.name === 'customDAGView'} onclick={() => changeLayout('customDAGView')}>
-                Custom DAG
-            </button>
-            <button class:active={currentLayout.name === 'concentric'} onclick={() => changeLayout('concentric')}>
-                Concentric
-            </button>
-        </div>
-    </div>
+		<h2>Graph View [{currentLayout.name}]</h2>
+		 <!-- Option select component for layout options -->
+		<div class="graph-view-selector">
+			<OptionSelector 
+				options={layoutOptions} 
+				activeOption={currentLayout.name} 
+				onSelect={changeLayout} 
+				iconSrc="/icons/graph-view-icon.png"
+			/>
+		</div>
+	</div>
+	
+   
+    
 	<CytoscapeGraph {graphmlData} layout={currentLayout} {style} {highlightedPath} />
 </div>
 
 <style>
 	.graph-view-container {
-		width: 100%;
 		height: 100%;
-		padding: 1em;
+        width: 100%;
+        max-width: 100%;
+        max-height: 100%;
+        padding: 1em;
 	}
     
     .graph-view-header {
-        margin-bottom: 0.5em;
+        margin-bottom: 1em;
         padding-bottom: 0.5em;
         display: flex;
         justify-content: space-between;
         align-items: center;
     }
     
-	h2 {
+	.graph-view-header h2 {
         margin: 0;
         padding-left: 1em;
         text-align: left;
@@ -125,31 +141,7 @@
 		color: #2c3e50;
 	}
     
-    .layout-buttons {
-        display: flex;
-        gap: 0.5em;
-    }
-    
-    button {
-        background-color: #f8f9fa;
-        border: 1px solid #dee2e6;
-        border-radius: 4px;
-        padding: 1em;
-		margin: 0.5em;
-        font-size: 0.875rem;
-        color: #2c3e50;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-    
-    button:hover {
-        background-color: #e9ecef;
-    }
-    
-    button.active {
-        background-color: #0062cc;
-        color: white;
-        border-color: #0062cc;
+    .graph-view-selector {
+        margin-right: 1em;
     }
 </style>
-
