@@ -230,20 +230,20 @@
     function highlightPath(cy, path) {
      
         if (!cy || !cy.elements() || cy.$('node').length === 0) {
-            console.log('Cytoscape not ready for highlighting');
+            // console.log('Cytoscape not ready for highlighting');
             return;
         }
         // Debug information
-        console.log('Attempting to highlight path:', path);
+        // console.log('Attempting to highlight path:', path);
         
         if (!path || !cy) {
-            console.log('Path or cy is null/undefined');
+            // console.log('Path or cy is null/undefined');
             return;
         }
         
         // Check if path has enough nodes to be valid
         if (path.length < 2) {
-            console.log('Path is too short:', path);
+            // console.log('Path is too short:', path);
             return;
         }
         
@@ -258,7 +258,7 @@
         }
         
         if (missingNodes.length > 0) {
-            console.log('Some nodes in the path do not exist in the graph:', missingNodes);
+            // console.log('Some nodes in the path do not exist in the graph:', missingNodes);
         }
         
         // Clear any existing highlights
@@ -270,7 +270,7 @@
             const node = cy.$id(nodeId);
             if (node.length > 0) {
                 node.addClass('path-node');
-                console.log('Highlighted node:', nodeId);
+                // console.log('Highlighted node:', nodeId);
             }
         }
         
@@ -286,11 +286,11 @@
                 edge.addClass('path-highlight');
                 foundEdges++;
             } else {
-                console.log(`No edge found between ${sourceId} and ${targetId}`);
+                // console.log(`No edge found between ${sourceId} and ${targetId}`);
             }
         }
         
-        console.log(`Highlighted ${foundEdges} edges out of ${path.length - 1} possible edges`);
+        // console.log(`Highlighted ${foundEdges} edges out of ${path.length - 1} possible edges`);
     }
 
     // Function to find all descendants of a node

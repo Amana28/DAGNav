@@ -1,4 +1,8 @@
+<!-- PathStats.svelte -->
 <script>
+    import * as d3 from 'd3';
+    import StackedHistogram from './StackedHistogram.svelte';
+    
     let { 
         paths = [], 
         selectedVertex = null,
@@ -90,6 +94,44 @@
             asIntermediate: selectedVertex.asIntermediate
         } : null
     );
+    
+
+    // Data Processing for Stacked Histogram
+    // Get unique path lengths for color coding without sorting
+    const uniquePathLengths = $derived(
+    Array.from(new Set(paths.map(path => path.length)))
+        .sort((a, b) => a - b)  // Sort numerically in ascending order
+    );
+
+    // Create color scale for path lengths
+    const color = $derived(
+        d3.scaleOrdinal()
+        .domain(uniquePathLengths)
+        .range(d3.schemeTableau10)
+    );
+
+    // Log the color assignments with counts
+    $effect(() => {
+        // Create a count map for quick lookup
+        const lengthCounts = {};
+        paths.forEach(path => {
+            lengthCounts[path.length] = (lengthCounts[path.length] || 0) + 1;
+        });
+        
+        console.log(`Path lengths with counts for ${currentPathType}:`);
+        uniquePathLengths.forEach(length => {
+            const count = lengthCounts[length] || 0;
+            const percentage = (count / paths.length * 100).toFixed(1);
+            console.log(
+                `%c  Length ${length}: %c${count} paths (${percentage}%)`,
+                `color: ${color(length)}; font-weight: bold;`,
+                `color: black; font-weight: normal;`
+            );
+        });
+    });
+    
+    const plotSize = 400;
+
 </script>
 
 <div class="path-stats-container">
@@ -156,6 +198,30 @@
                 </div>
             </div>
             {/if}
+
+            <div class="charts-container">
+                <!-- Histogram container -->
+                <div class="histogram-container">
+                    <h3>Path Length Distribution</h3>
+                    <StackedHistogram 
+                        {paths} 
+                        {color}
+                        uniquePathLengths={uniquePathLengths}
+                        width={800}
+                        height={700} 
+                        marginLeft={60}
+                        marginTop={60}
+                        marginRight={30} 
+                        marginBottom={50} 
+                    />
+                </div>
+                
+                <!-- Scatter plot container -->
+                <div class="scatter-container">
+                    <h3>Path Length vs Vertex Count</h3>
+                    <!-- Your scatter plot component will go here -->
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -267,5 +333,34 @@
 
     .vertex-stat-value {
         font-weight: bold;
+    }
+    
+    .charts-container {
+        margin-top: 2em;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.5em;
+        width: 100%;
+    }
+
+    .histogram-container, .scatter-container {
+        flex: 1 1 calc(50% - 1.5em);
+        min-width: 300px;
+        max-width: calc(50% - 0.75em);
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 1em;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        height: auto; 
+        min-height: 800px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .histogram-container h3, .scatter-container h3 {
+        margin-top: 0;
+        color: #0062cc;
+        margin-bottom: 1em;
+        flex: 0 0 auto;
     }
 </style>

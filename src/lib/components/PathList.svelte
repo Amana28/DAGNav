@@ -31,12 +31,12 @@
     let sortOptions = $derived(
         currentPathType === 'predicted' 
         ? [
-            { value: 'length+', label: 'Length ↑' },
-            { value: 'length-', label: 'Length ↓' },
-            { value: 's+', label: 'Start ↑' },
-            { value: 's-', label: 'Start ↓' },
-            { value: 't+', label: 'End ↑' },
-            { value: 't-', label: 'End ↓' },
+            { value: 'length+', label: 'Length   ↑' },
+            { value: 'length-', label: 'Length   ↓' },
+            { value: 's+', label: 'Start   ↑' },
+            { value: 's-', label: 'Start   ↓' },
+            { value: 't+', label: 'End   ↑' },
+            { value: 't-', label: 'End   ↓' },
             { value: 'correct', label: 'Correct' },
             { value: 'incorrect', label: 'Incorrect' }
         ] 

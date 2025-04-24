@@ -5,7 +5,7 @@ export async function load({ fetch }) {
     // Load GraphML file
     let graphmlData = null;
     try {
-        const graphmlRes = await fetch('/graph/path_graph.graphml');
+        const graphmlRes = await fetch('/graph-final/path_graph.graphml');
         
         if (graphmlRes.ok) {
             graphmlData = await graphmlRes.text();
@@ -19,7 +19,7 @@ export async function load({ fetch }) {
     // Load train paths
     let trainPaths = [];
     try {
-        const trainRes = await fetch('/paths/train_20.txt');
+        const trainRes = await fetch('/paths-final/train_20.txt');
         
         if (trainRes.ok) {
             const trainText = await trainRes.text();
@@ -34,7 +34,7 @@ export async function load({ fetch }) {
     // Load test paths
     let testPaths = [];
     try {
-        const testRes = await fetch('/paths/test.txt');
+        const testRes = await fetch('/paths-final/test.txt');
         
         if (testRes.ok) {
             const testText = await testRes.text();
@@ -49,7 +49,7 @@ export async function load({ fetch }) {
     // Load predicted paths
     let predictedPaths = [];
     try {
-        const predictedRes = await fetch('/paths/pred_test_10000.txt');
+        const predictedRes = await fetch('/paths-final/pred_test_10000.txt');
         
         if (predictedRes.ok) {
             const predictedText = await predictedRes.text();

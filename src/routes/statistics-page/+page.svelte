@@ -3,6 +3,7 @@
     import PathList from '$lib/components/PathList.svelte';
     import VertexList from '$lib/components/VertexList.svelte';
     import PathStats from '$lib/components/PathStats.svelte';
+    import * as d3 from 'd3';
     
     let { data } = $props();
     
@@ -42,6 +43,40 @@
     function handlePathTypeChange(type) {
         currentPathType = type;
     }
+
+    
+    // Get unique path lengths for color coding without sorting
+    const uniquePathLengths = $derived(
+        Array.from(new Set(displayPaths.map(path => path.length)))
+    );
+
+    // Create color scale for path lengths
+    const color = $derived(
+        d3.scaleOrdinal()
+        .domain(uniquePathLengths)
+        .range(d3.schemeTableau10)
+    );
+
+    // Log the color assignments with counts
+    $effect(() => {
+        // Create a count map for quick lookup
+        const lengthCounts = {};
+        displayPaths.forEach(path => {
+            lengthCounts[path.length] = (lengthCounts[path.length] || 0) + 1;
+        });
+        
+        console.log(`Path lengths with counts for ${currentPathType}:`);
+        uniquePathLengths.forEach(length => {
+            const count = lengthCounts[length] || 0;
+            const percentage = (count / displayPaths.length * 100).toFixed(1);
+            console.log(
+                `%c  Length ${length}: %c${count} paths (${percentage}%)`,
+                `color: ${color(length)}; font-weight: bold;`,
+                `color: black; font-weight: normal;`
+            );
+        });
+    });
+    
 </script>
 
 <div class="main-container">
