@@ -2,6 +2,7 @@
 <script>
     import OptionSelector from '$lib/components/OptionSelector.svelte';
     import SortSelector from '$lib/components/SortSelector.svelte';
+	import { parsePaths } from '$lib/utils/pathUtils.js';
     import * as d3 from 'd3';
     
     // Define props with default values
@@ -14,9 +15,9 @@
     
     // Path options for the selector
     const pathTypeOptions = [
-        { value: 'train', label: 'Training Paths' },
-        { value: 'test', label: 'Test Paths' },
-        { value: 'predicted', label: 'Predicted Paths' }
+        { value: 'train', label: 'train' },
+        { value: 'test', label: 'test' },
+        { value: 'predicted', label: 'predicted' }
     ];
     
     // Make sure this function is correctly passing the type up to the parent
@@ -31,22 +32,22 @@
     let sortOptions = $derived(
         currentPathType === 'predicted' 
         ? [
-            { value: 'length+', label: 'Length   ↑' },
-            { value: 'length-', label: 'Length   ↓' },
-            { value: 's+', label: 'Start   ↑' },
-            { value: 's-', label: 'Start   ↓' },
-            { value: 't+', label: 'End   ↑' },
-            { value: 't-', label: 'End   ↓' },
+            { value: 'length+', label: 'Length ⬆︎' },
+            { value: 'length-', label: 'Length ⬇︎' },
+            { value: 's+', label: 'Start ⬆︎' },
+            { value: 's-', label: 'Start ⬇︎' },
+            { value: 't+', label: 'End ⬆︎' },
+            { value: 't-', label: 'End ⬇︎' },
             { value: 'correct', label: 'Correct' },
             { value: 'incorrect', label: 'Incorrect' }
         ] 
         : [
-            { value: 'length+', label: 'Length ↑' },
-            { value: 'length-', label: 'Length ↓' },
-            { value: 's+', label: 'Start ↑' },
-            { value: 's-', label: 'Start ↓' },
-            { value: 't+', label: 'End ↑' },
-            { value: 't-', label: 'End ↓' }
+            { value: 'length+', label: 'Length ⬆︎' },
+            { value: 'length-', label: 'Length ⬇︎' },
+            { value: 's+', label: 'Start ⬆︎' },
+            { value: 's-', label: 'Start ⬇︎' },
+            { value: 't+', label: 'End ⬆︎' },
+            { value: 't-', label: 'End ⬇︎' }
         ]
     );
     
@@ -123,7 +124,7 @@
 
 <div class="path-list-container">
     <div class="path-list-header">
-        <h2>Generated Paths</h2>
+        <h2>[{currentPathType}] Paths [{paths.length}]</h2>
         
         <div class="control-buttons">
             <div class="sort-selector">

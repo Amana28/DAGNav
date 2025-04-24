@@ -77,15 +77,16 @@
 	];
     // Layout selection options for OptionSelector
     const layoutOptions = [
-        { value: 'cose', label: 'Force Layout' },
-        { value: 'customDAGView', label: 'Custom DAG' },
-        { value: 'concentric', label: 'Concentric' }
+        { value: 'cose', label: 'Force' },
+		{ value: 'concentric', label: 'Concentric' },
+        { value: 'customDAGView', label: 'Custom DAG' }
+        
     ];
 	// Path type options 
     const pathTypeOptions = [
-        { value: 'train', label: 'Training Paths' },
+        { value: 'train', label: 'training Paths' },
         { value: 'valid', label: 'Validation Paths' },
-        { value: 'predicted', label: 'Predicted Paths' }
+        { value: 'predicted', label: 'predicted Paths' }
     ];
 	
 	// Handle layout change
@@ -101,7 +102,11 @@
 
 <div class="graph-view-container" bind:clientWidth={containerWidth} bind:clientHeight={containerHeight}>
     <div class="graph-view-header">
-		<h2>Graph View [{currentLayout.name}]</h2>
+		<h2>
+		Graph View [
+			{layoutOptions.find(option => option.value === currentLayout.name)?.label || currentLayout.name}
+		]
+		</h2>
 		<!-- Option select component for layout options -->
 		<div class="graph-view-selector">
 			<OptionSelector 

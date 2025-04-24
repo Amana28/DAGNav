@@ -1,30 +1,24 @@
-<!-- StackedHistogram.svelte -->
+<!-- Histogram.svelte -->
 <script>
     import * as d3 from 'd3';
     
     // Props with default values
     let { 
-        paths = [], 
-        color = null,
-        uniquePathLengths = null,
-        width = 600, 
-        height = 400,
-        marginLeft = 60,
-        marginTop = 30,
-        marginRight = 30,
-        marginBottom = 50
+        paths, 
+        color,
+        uniquePathLengths,
+        width, 
+        height,
+        marginLeft,
+        marginTop,
+        marginRight,
+        marginBottom
     } = $props();
     
     // If uniquePathLengths is not provided, calculate it
     const pathLengths = $derived(
-        uniquePathLengths || Array.from(new Set(paths.map(path => path.length)))
-    );
-    
-    // If color is not provided, create a default color scale
-    const colorScale = $derived(
-        color || d3.scaleOrdinal()
-            .domain(pathLengths)
-            .range(d3.schemeTableau10)
+        (uniquePathLengths || Array.from(new Set(paths.map(path => path.length))))
+        .sort((a, b) => a - b)
     );
     
     // Get the counts for the filtered dataset
@@ -38,8 +32,12 @@
     
     // Convert to array for easier use in rendering
     const countArray = $derived(
-        Array.from(counts, ([length, count]) => ({ length, count }))
-            .sort((a, b) => a.length - b.length)
+        Array.from(counts, ([length, count]) => ({ 
+            length, 
+            count,
+            percentage: (count / paths.length) * 100
+        }))
+        .sort((a, b) => a.length - b.length)
     );
     
     // Scales
@@ -54,48 +52,53 @@
             .padding(0.1)
     );
     
-    // Y axis represents counts (heights of bars)
+    // Y axis represents percentages (heights of bars)
     const y = $derived(
         d3
             .scaleLinear()
-            .domain([0, maxCount])
+            .domain([0, Math.min(100, Math.ceil(d3.max(countArray, d => d.percentage) * 1.1 || 0))])
             .nice()
             .range([height - marginBottom, marginTop])
+    );
+    
+    // Are we viewing predicted paths?
+    const ispredicted = $derived(() => 
+        paths && paths.length > 0 && paths[0]?.type === 'predicted'
     );
 </script>
 
 <svg {width} {height}>
     <!-- Bars -->
     <g>
-        {#each countArray as {length, count} (length)}
+        {#each countArray as {length, count, percentage} (length)}
             <rect
                 x={x(length)}
-                y={y(count)}
+                y={y(percentage)}
                 width={x.bandwidth()}
-                height={(height - marginBottom) - y(count)}
-                fill={colorScale(length)}
+                height={(height - marginBottom) - y(percentage)}
+                fill={ispredicted ? "#87CEEB" : "#87CEEB"} 
             />
             
-            <!-- Add text labels for count -->
+            <!-- Add text labels with percentage -->
             <text
                 x={x(length) + x.bandwidth() / 2}
-                y={y(count) - 5}
+                y={y(percentage) - 5}
                 text-anchor="middle"
                 font-size="12px"
                 fill="#555"
             >
-                {count}
+                {percentage.toFixed(1)}%
             </text>
         {/each}
     </g>
     
     <!-- X Axis (Path Length) -->
     <g transform={`translate(0,${height - marginBottom})`}>
-        <path stroke="currentColor" d={`M${marginLeft},0H${width - marginRight}`}></path>
+        <path stroke="currentColor" stroke-width="1.5" d={`M${marginLeft},0H${width - marginRight}`}></path>
         {#each pathLengths as length}
             <g transform={`translate(${x(length) + x.bandwidth() / 2},0)`}>
-                <line stroke="currentColor" y2="6"></line>
-                <text fill="currentColor" y="9" dy="0.71em" text-anchor="middle">{length}</text>
+                <line stroke="currentColor" stroke-width="1.5" y2="6"></line>
+                <text fill="currentColor" y="9" dy="0.71em" text-anchor="middle" font-size="12px">{length}</text>
             </g>
         {/each}
         <text 
@@ -103,26 +106,30 @@
             x={(width - marginRight + marginLeft) / 2} 
             y="40" 
             text-anchor="middle"
+            font-size="14px"
+            font-weight="bold"
         >
             Path Length
         </text>
     </g>
     
-    <!-- Y Axis (Count) -->
+    <!-- Y Axis (Percentage) -->
     <g transform={`translate(${marginLeft},0)`}>
-        <path stroke="currentColor" d={`M0,${marginTop}V${height - marginBottom}`}></path>
+        <path stroke="currentColor" stroke-width="1.5" d={`M0,${marginTop}V${height - marginBottom}`}></path>
         {#each y.ticks() as tick}
             <g transform={`translate(0,${y(tick)})`}>
-                <line stroke="currentColor" x2="-6"></line>
-                <text fill="currentColor" x="-9" dy="0.32em" text-anchor="end">{tick}</text>
+                <line stroke="currentColor" stroke-width="1.5" x2="-6"></line>
+                <text fill="currentColor" x="-9" dy="0.32em" text-anchor="end" font-size="12px">{tick}%</text>
             </g>
         {/each}
         <text 
             fill="currentColor" 
             transform={`translate(-40,${(height - marginBottom + marginTop) / 2}) rotate(-90)`} 
             text-anchor="middle"
+            font-size="14px"
+            font-weight="bold"
         >
-            Count
+            Percentage
         </text>
     </g>
 </svg>
@@ -135,6 +142,5 @@
     
     text {
         font-family: sans-serif;
-        font-size: 10px;
     }
 </style>

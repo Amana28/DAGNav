@@ -1,15 +1,142 @@
 <!-- PathStats.svelte -->
 <script>
     import * as d3 from 'd3';
-    import StackedHistogram from './StackedHistogram.svelte';
+    import Histogram from './Histogram.svelte';
+	import ScatterPlot from './ScatterPlot.svelte';
     
     let { 
-        paths = [], 
+        graphmlData = null,
+        trainPaths = [], 
+        testPaths = [],
+        predictedPaths = [],
+        currentPathType = 'predicted',
         selectedVertex = null,
-        currentPathType = 'train',
         width = 600,
-        height = 400
+        height = 400,
+        hoveredPath
     } = $props();
+
+    // Parse GraphML and calculate (Outgoing) degrees
+    function calculateNodeOutDegrees(graphmlData) {
+        // Parse the GraphML
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(graphmlData, "text/xml");
+        
+        // Initialize out-degree trackers
+        const outDegrees = {};
+        
+        // Extract nodes and initialize all with 0
+        const nodes = xmlDoc.getElementsByTagName('node');
+        for (let i = 0; i < nodes.length; i++) {
+            const id = nodes[i].getAttribute('id');
+            outDegrees[id] = 0;
+        }
+        
+        // Count only outgoing edges
+        const edges = xmlDoc.getElementsByTagName('edge');
+        for (let i = 0; i < edges.length; i++) {
+            const source = edges[i].getAttribute('source');
+            outDegrees[source] = (outDegrees[source] || 0) + 1; // Only count out-degree
+        }
+
+        return outDegrees;
+    }
+
+    // Store processed flags
+    let processedGraphML = $state(false);
+    let nodeOutDegrees = $state({});
+    let updatedtrainPaths = $state([]);
+    let updatedtestPaths = $state([]);
+    let updatedpredictedPaths = $state([]);
+    let pathsProcessed = $state(false);
+
+    // Process GraphML only once
+    $effect(() => {
+        if (graphmlData && !processedGraphML) {
+            console.log("Processing GraphML data for out-degrees...");
+            nodeOutDegrees = calculateNodeOutDegrees(graphmlData);
+            processedGraphML = true;
+            console.log(`Calculated out-degrees for ${Object.keys(nodeOutDegrees).length} nodes`);
+        }
+    });
+
+    // Function to calculate sum of degrees for any path
+    function calculateSumDegrees(pathObj) {
+        let sum = 0;
+        // For all path types, use the same logic as for correct predicted paths
+        const endIndex = pathObj.correct === false && pathObj.errorIndexStart !== undefined ? 
+                        pathObj.errorIndexStart : 
+                        pathObj.path.length - 2;
+            
+        // Sum out-degrees from index 2 to endIndex
+        for (let i = 2; i <= endIndex; i++) {
+            if (i < pathObj.path.length) {
+                const nodeId = pathObj.path[i].toString();
+                sum += nodeOutDegrees[nodeId] || 0;
+            }
+        }
+        
+        return sum;
+    }
+
+    // Update all path types with degree information
+    $effect(() => {
+        if (Object.keys(nodeOutDegrees).length > 0 && !pathsProcessed) {
+            console.log("Updating all path types with degree information...");
+            
+            // Update train paths
+            updatedtrainPaths = trainPaths.map(pathObj => ({
+                ...pathObj,
+                sumDegrees: calculateSumDegrees(pathObj)
+            }));
+            
+            // Update test paths
+            updatedtestPaths = testPaths.map(pathObj => ({
+                ...pathObj,
+                sumDegrees: calculateSumDegrees(pathObj)
+            }));
+            
+            // Update predicted paths
+            updatedpredictedPaths = predictedPaths.map(pathObj => ({
+                ...pathObj,
+                sumDegrees: calculateSumDegrees(pathObj)
+            }));
+            
+            pathsProcessed = true;
+            console.log(`Updated paths with degree information: ${updatedtrainPaths.length} train, ${updatedtestPaths.length} test, ${updatedpredictedPaths.length} predicted`);
+            
+
+            // Log full details of a single path
+            if (updatedtrainPaths.length > 0) {
+                console.log('Detailed view of first path:', JSON.stringify(updatedpredictedPaths[0], null, 2));
+            }
+        }
+    });
+
+    // Use updated paths in the paths variable
+    const paths = $derived(
+        currentPathType === 'train' ? updatedtrainPaths :
+        currentPathType === 'test' ? updatedtestPaths :
+        currentPathType === 'predicted' ? updatedpredictedPaths : 
+        []
+    );
+
+    // Debug
+    // $effect(() => {
+    //     if (predictedPaths.length > 0) {
+    //         const p = predictedPaths[44]; // first path
+    //         console.log({
+    //         path: `Array(${p.path.length})`,
+    //         length: p.length,
+    //         start: p.start,
+    //         end: p.end,
+    //         type: p.type,
+    //         raw: p.raw?.substring(0, 20) + (p.raw?.length > 20 ? '...' : ''),
+    //         correct: p.correct,
+    //         errorType: p.errorType
+    //         });
+    //     }
+    // });
 
     // Computed statistics
     let pathStats = $derived(computePathStats(paths));
@@ -96,7 +223,7 @@
     );
     
 
-    // Data Processing for Stacked Histogram
+    // Data Processing for Histogram
     // Get unique path lengths for color coding without sorting
     const uniquePathLengths = $derived(
     Array.from(new Set(paths.map(path => path.length)))
@@ -104,33 +231,36 @@
     );
 
     // Create color scale for path lengths
-    const color = $derived(
-        d3.scaleOrdinal()
-        .domain(uniquePathLengths)
-        .range(d3.schemeTableau10)
-    );
+    // const color = $derived(
+    //     d3.scaleOrdinal()
+    //     .domain(uniquePathLengths)
+    //     .range(d3.schemeTableau10)
+    // );
 
     // Log the color assignments with counts
-    $effect(() => {
-        // Create a count map for quick lookup
-        const lengthCounts = {};
-        paths.forEach(path => {
-            lengthCounts[path.length] = (lengthCounts[path.length] || 0) + 1;
-        });
+    // $effect(() => {
+    //     // Create a count map for quick lookup
+    //     const lengthCounts = {};
+    //     paths.forEach(path => {
+    //         lengthCounts[path.length] = (lengthCounts[path.length] || 0) + 1;
+    //     });
         
-        console.log(`Path lengths with counts for ${currentPathType}:`);
-        uniquePathLengths.forEach(length => {
-            const count = lengthCounts[length] || 0;
-            const percentage = (count / paths.length * 100).toFixed(1);
-            console.log(
-                `%c  Length ${length}: %c${count} paths (${percentage}%)`,
-                `color: ${color(length)}; font-weight: bold;`,
-                `color: black; font-weight: normal;`
-            );
-        });
-    });
-    
-    const plotSize = 400;
+    //     console.log(`Path lengths with counts for ${currentPathType}:`);
+    //     uniquePathLengths.forEach(length => {
+    //         const count = lengthCounts[length] || 0;
+    //         const percentage = (count / paths.length * 100).toFixed(1);
+    //         console.log(
+    //             `%c  Length ${length}: %c${count} paths (${percentage}%)`,
+    //             `color: ${color(length)}; font-weight: bold;`,
+    //             `color: black; font-weight: normal;`
+    //         );
+    //     });
+    // });
+
+
+    // Data Processing for Histogram
+
+    // First 
 
 </script>
 
@@ -203,9 +333,8 @@
                 <!-- Histogram container -->
                 <div class="histogram-container">
                     <h3>Path Length Distribution</h3>
-                    <StackedHistogram 
+                    <Histogram 
                         {paths} 
-                        {color}
                         uniquePathLengths={uniquePathLengths}
                         width={800}
                         height={700} 
@@ -218,8 +347,17 @@
                 
                 <!-- Scatter plot container -->
                 <div class="scatter-container">
-                    <h3>Path Length vs Vertex Count</h3>
-                    <!-- Your scatter plot component will go here -->
+                    <h3>Path Length vs Average Degree</h3>
+                    <ScatterPlot 
+                        paths={paths}
+                        width={800}
+                        height={700} 
+                        marginLeft={60}
+                        marginTop={60}
+                        marginRight={30} 
+                        marginBottom={50}
+                        highlightedPath={hoveredPath}
+                    />
                 </div>
             </div>
         </div>
